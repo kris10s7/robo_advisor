@@ -19,15 +19,21 @@ def to_usd(my_price):
 api_key = os.environ.get("ALPHAVANTAGE_API_KEY") #"demo"
 #print(api_key)
 
+#INPUT VALID SYMBOL--must be less than 6 characters
 symbol = input("Please input a stock ticker:") #"AMZN"
 
-request_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
+if (len(symbol) > 5):
+    print("Symbol must be less than 6 characters")
+    exit()
+else:
+#IF VALID SYMBOL, MAKING REQUEST FOR DATA
+    request_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
 
-response = requests.get(request_url)
+    response = requests.get(request_url)
 
-parsed_response = json.loads(response.text)
+    parsed_response = json.loads(response.text)
 
-last_refreshed = parsed_response["Meta Data"]["3. Last Refreshed"]
+    last_refreshed = parsed_response["Meta Data"]["3. Last Refreshed"]
 
 #breakpoint()
 
