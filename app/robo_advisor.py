@@ -19,7 +19,7 @@ def to_usd(my_price):
 api_key = os.environ.get("ALPHAVANTAGE_API_KEY") #"demo"
 #print(api_key)
 
-symbol = "MSFT" #TODO ask user
+symbol = input("Please input a stock ticker:") #"AMZN"
 
 request_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
 
@@ -82,11 +82,11 @@ with open(csv_file_path, "w") as csv_file: # "w" means "open the file for writin
             "volume": daily_prices["5. volume"]
         })
  
- #Request date
+ #making "Request AT" dynamic:
 now = datetime.datetime.now()
 
 print("-------------------------")
-print("SELECTED SYMBOL: MSFT")
+print("SELECTED SYMBOL: " + symbol)
 print("-------------------------")
 print("REQUESTING STOCK MARKET DATA...")
 print("REQUEST AT: " + now.strftime("%Y-%m-%d %I:%M %p"))
