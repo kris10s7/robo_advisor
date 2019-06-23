@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import datetime
 
 from dotenv import load_dotenv
 import requests
@@ -81,12 +82,14 @@ with open(csv_file_path, "w") as csv_file: # "w" means "open the file for writin
             "volume": daily_prices["5. volume"]
         })
  
+ #Request date
+now = datetime.datetime.now()
 
 print("-------------------------")
 print("SELECTED SYMBOL: MSFT")
 print("-------------------------")
 print("REQUESTING STOCK MARKET DATA...")
-print("REQUEST AT: 2018-02-20 02:00pm")
+print("REQUEST AT: " + now.strftime("%Y-%m-%d %I:%M %p"))
 print("-------------------------")
 print(f"LATEST DAY: {last_refreshed}")
 print(f"LATEST CLOSE: {to_usd(float(latest_close))}")
