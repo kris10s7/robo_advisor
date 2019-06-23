@@ -1,5 +1,9 @@
-import requests
+import csv
 import json
+import os
+
+import requests
+
 
 # source: https://github.com/prof-rossetti/nyu-info-2335-201905/edit/master/notes/python/datatypes/numbers.md
 def to_usd(my_price):
@@ -49,6 +53,19 @@ recent_low = min(low_prices)
 # INFO OUTPUTS
 #
 
+# csv-mgmt/write_teams.py
+
+#csv_file_path = "prices.csv" # a relative filepath
+
+csv_file_path = os.path.join(os.path.dirname(__file__), "..", "data", "prices.csv")
+
+with open(csv_file_path, "w") as csv_file: # "w" means "open the file for writing"
+    writer = csv.DictWriter(csv_file, fieldnames=["city", "name"])
+    writer.writeheader() # uses fieldnames set above
+    writer.writerow({"city": "New York", "name": "Yankees"})
+    writer.writerow({"city": "New York", "name": "Mets"})
+    writer.writerow({"city": "Boston", "name": "Red Sox"})
+    writer.writerow({"city": "New Haven", "name": "Ravens"})
 
 print("-------------------------")
 print("SELECTED SYMBOL: XYZ")
@@ -64,5 +81,8 @@ print("-------------------------")
 print("RECOMMENDATION: BUY!")
 print("RECOMMENDATION REASON: TODO")
 print("-------------------------")
+print(f"WRITING DATA TO {csv_file_path}...")
+print("-------------------------")
 print("HAPPY INVESTING!")
 print("-------------------------")
+
