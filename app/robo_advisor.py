@@ -1,85 +1,81 @@
 import csv
-import json
-import os
-import datetime
-import statistics 
-from dotenv import load_dotenv
 import requests
+import json 
+import os
+import time
+from dotenv import load_dotenv
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+import plotly.plotly as py
+import plotly.graph_objs as go
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
-load_dotenv() #> loads contents of the .env file into the script's environment
+load_dotenv()
 
-# source: https://github.com/prof-rossetti/nyu-info-2335-201905/edit/master/notes/python/datatypes/numbers.md
 def to_usd(my_price):
-    return f"${my_price:,.2f}" #> $12,000.71
+    return "${0:,.2f}".format(my_price)
 
 #
-# INFO INPUTS
+#INFO INPUTS
 #
+import plotly
 
-api_key = os.environ.get("ALPHAVANTAGE_API_KEY") #"demo"
+plotly.tools.set_credentials_file(username='sz745', api_key='5Bxn6nSI89uyyAkcjmKL')
+
+api_key = os.environ.get("ALPHAVANTAGE_API_KEY")
 #print(api_key)
 
-#INPUT VALID SYMBOL--must be less than 6 characters
-symbol = input("Please input a stock ticker:") #"AMZN"
+try:
+    symbol = input("Please specify a stock symbol (e.g. MSFT) and press enter: ")
 
-if (len(symbol) > 5):
-    print("Symbol must be less than 6 characters")
-    exit()
-else:
-#IF VALID SYMBOL, MAKING REQUEST FOR DATA
+    if not symbol.isalpha():
+            print("Oh, expecting a properly-formed stock symbol like 'MSFT'. Please try again.")
+            exit()
+# used isalpha() to check for alphabetical input only: https://www.geeksforgeeks.org/python-string-isalpha-application/
+
     request_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
-
     response = requests.get(request_url)
-
-    parsed_response = json.loads(response.text)
-
+    parsed_response = json.loads(response.text)  # parse json into a dictionary
     last_refreshed = parsed_response["Meta Data"]["3. Last Refreshed"]
 
-#breakpoint()
+# print(type(response))  #this is a Response
+# print(response.status_code)  #200
+# print(response.text)
 
-tsd = parsed_response["Time Series (Daily)"] #TODO: sort to ensure latest day is first
+except KeyError:
+    print("Sorry, couldn't find any trading data for that stock symbol. Please try again.")
+    exit()
 
+# used Key Error exception handling outlined here: https://python101.pythonlibrary.org/chapter7_exception_handling.html
+
+tsd = parsed_response["Time Series (Daily)"]
 dates = list(tsd.keys())
-
-latest_day = dates[0] # "2019-02-20"
-
-latest_close = tsd[latest_day]["4. close"] #> 1,000.00
+latest_day = dates[0] #assume first day is top; to do: sort to ensure latest day is first
+latest_close = tsd[latest_day]["4. close"]
 
 
-# maximum of all high prices, & min of all low prices
+# get high price from each day
+# high_prices = [10, 20, 30, 5] # maximum of all high prices
+# recent_high = max(high_prices)
 
 high_prices = []
 low_prices = []
 
 for date in dates:
-    high_price = tsd[date]["2. high"]
-    low_price = tsd[date]["3. low"]
-    high_prices.append(high_price)
-    low_prices.append(low_price)
+    high_price = tsd[latest_day]["2. high"]
+    low_price = tsd[latest_day]["3. low"]
+    high_prices.append(float(high_price))
+    low_prices.append(float(low_price))
 
 recent_high = max(high_prices)
 recent_low = min(low_prices)
-
-# average of all closing prices
-
-closing_prices = []
-
-for date in dates:
-    closing_price = tsd[date]["4. close"]
-    closing_prices.append(closing_price)
-
-closing_prices_float = map(float, closing_prices)
-
-average_closing_price = statistics.mean(closing_prices_float)
 
 #
 # INFO OUTPUTS
 #
 
-# csv-mgmt/write_teams.py
-
-#csv_file_path = "prices.csv" # a relative filepath
-
+# csv_file_path = "data/prices.csv"
 csv_file_path = os.path.join(os.path.dirname(__file__), "..", "data", "prices.csv")
 
 csv_headers = ["timestamp", "open", "high", "low", "close", "volume"]
@@ -95,47 +91,47 @@ with open(csv_file_path, "w") as csv_file: # "w" means "open the file for writin
             "high": daily_prices["2. high"],
             "low": daily_prices["3. low"],
             "close": daily_prices["4. close"],
-            "volume": daily_prices["5. volume"]
-        })
-#making "Request AT" dynamic:
-now = datetime.datetime.now()
+            "volume": daily_prices["5. volume"],
+            })
 
-#Print results
 print("-------------------------")
-print("SELECTED SYMBOL: " + symbol)
+print(f"SELECTED SYMBOL: {symbol}")
+
 print("-------------------------")
 print("REQUESTING STOCK MARKET DATA...")
-print("REQUEST AT: " + now.strftime("%Y-%m-%d %I:%M %p"))
-print("-------------------------")
-print(f"LATEST DAY: {last_refreshed}")
-print(f"LATEST CLOSE: {to_usd(float(latest_close))}")
-print(f"RECENT HIGH: {to_usd(float(recent_high))}")
-print(f"RECENT LOW: {to_usd(float(recent_low))}")
-print("-------------------------")
-print(f"AVERAGE CLOSING PRICE IN LAST 100 DAYS: {to_usd(float(average_closing_price))}")
-print("-------------------------")
-#Determining recommendation
-if average_closing_price:
-    if average_closing_price < float(latest_close):
-        print("RECOMMENDATION: SELL!")
-        print("RECOMMENDATION REASON: The stock is overvalued. The most recent closing price is higher than its average closing price in the last 100 days.")
-        print(f"WRITING DATA TO {csv_file_path}...")
-        print("-------------------------")
-        print("HAPPY INVESTING!")
-        print("-------------------------")
-    elif average_closing_price > float(latest_close):
-        print("RECOMMENDATION: BUY!")
-        print("RECOMMENDATION REASON: The stock is undervalued. The most recent closing price is lower than its average closing price in the last 100 days.")
-        print("-------------------------")
-        print(f"WRITING DATA TO {csv_file_path}...")
-        print("-------------------------")
-        print("HAPPY INVESTING!")
-        print("-------------------------")
-else:
-        print("RECOMMENDATION: HOLD!")
-        print("RECOMMENDATION REASON: The stock trades at fair value. The most recent closing price is equal to its average closing price in the last 100 days.")
-        print("-------------------------")
-        print(f"WRITING DATA TO {csv_file_path}...")
-        print("-------------------------")
-        print("HAPPY INVESTING!")
-        print("-------------------------")
+
+now = time.strftime("%Y-%m-%d %H:%M:%p")
+# used code to format date and time suggested in this stackoverflow thread: https://stackoverflow.com/questions/31955761/converting-python-string-to-datetime-obj-with-am-pm
+# chart closing price
+csv_filepath = os.path.join(os.path.dirname(__file__), "..", "data", "prices.csv")
+
+df = pd.read_csv(csv_filepath, header=0)
+
+#y=df["timestamp"]
+#x=df["close"]
+#plt.plot(x, y)
+#
+#plt.title(f"{symbol}'s Closing Price")
+#plt.xlabel("Date")
+#plt.ylabel("Price")
+#
+#plt.show()
+
+# candlestick chart
+
+trace = go.Candlestick(x=df['timestamp'],
+                open=df['open'],
+                high=df['high'],
+                low=df['low'],
+                close=df['close'])
+data = [trace]
+py.iplot(data, filename='data\prices.csv')
+
+#Offline plot
+plotly.offline.plot({
+    "data": [go.Scatter(x=df['timestamp'], y=df['close'])],
+    "layout": go.Layout(title="hello world")
+}, auto_open=True)
+
+#another offline plot
+plot([go.Histogram(x=[1, 2, 3], y=[3, 1, 6])])
