@@ -5,6 +5,7 @@ import os
 import time
 from dotenv import load_dotenv
 import pandas as pd
+from datetime import datetime
 import matplotlib
 import matplotlib.pyplot as plt
 import plotly.plotly as py
@@ -21,7 +22,7 @@ def to_usd(my_price):
 #
 import plotly
 
-plotly.tools.set_credentials_file(username='sz745', api_key='5Bxn6nSI89uyyAkcjmKL')
+plotly.tools.set_credentials_file(username='kms923', api_key='28X77R0cm1ATCaYZGbbY')
 
 api_key = os.environ.get("ALPHAVANTAGE_API_KEY")
 #print(api_key)
@@ -127,11 +128,4 @@ trace = go.Candlestick(x=df['timestamp'],
 data = [trace]
 py.iplot(data, filename='data\prices.csv')
 
-#Offline plot
-plotly.offline.plot({
-    "data": [go.Scatter(x=df['timestamp'], y=df['close'])],
-    "layout": go.Layout(title="hello world")
-}, auto_open=True)
-
-#another offline plot
-plot([go.Histogram(x=[1, 2, 3], y=[3, 1, 6])])
+ 
